@@ -34,13 +34,13 @@ def generate_launch_description():
     
     publish_rate_arg = DeclareLaunchArgument(
         'publish_rate',
-        default_value='1.0',
+        default_value='10.0',
         description='图片发布频率（Hz），建议范围: 0.1-10.0'
     )
     
     loop_arg = DeclareLaunchArgument(
         'loop',
-        default_value='false',
+        default_value='true',
         description='是否循环播放图片（true/false）'
     )
     
