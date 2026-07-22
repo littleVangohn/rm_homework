@@ -48,7 +48,7 @@ rosdep install --from-paths src --ignore-src -r -y
 
 ### 模型文件
 
-- YOLO 模型：`src/armor_detector/models/armor_yolo11s.onnx`（随仓库附带）。
+- YOLO 模型：`src/armor_detector/models/armor_yolo11s.onnx`
 - 相关参数见 `src/armor_detector/config/armor_detector.yaml`
   （`input_size`、`confidence_threshold`、相机内参 `camera_matrix`、畸变 `distortion` 等）。
 
