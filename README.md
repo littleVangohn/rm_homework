@@ -1,123 +1,122 @@
-# Image Publisher - ROS 2 图像发布节点
+# qianli_basic_train
 
-## 📖 项目简介
+基于 ROS 2 的装甲板识别与位姿解算 demo。使用 YOLO（ONNX Runtime 推理）检测装甲板，再通过 PnP 解算出目标在机器人坐标系下的坐标。
 
-`image_publisher` 用于从指定文件夹读取图像文件并发布到ROS话题。
+## 功能包组成
 
-## 📦 安装与编译
+| 功能包 | 说明 |
+| --- | --- |
+| `armor_detector` | YOLO 装甲板识别 + PnP 位姿解算节点，发布识别结果与调试图像 |
+| `image_publisher` | 从指定文件夹循环读取图片并发布到图像话题，用于离线测试 |
+| `aim_interfaces` | 自定义消息 `AimInfo`（`int16[] coordinate`、`int16 type`） |
 
-### 1. 克隆仓库
+## 依赖
+
+### 系统环境
+
+- **Ubuntu 22.04**
+- **ROS 2 Humble**（本文命令基于 `/opt/ros/humble`）
+- **colcon**（`colcon-common-extensions`）
+- C++17 编译器（GCC/Clang）、CMake ≥ 3.8
+
+### ROS 2 依赖
+
+以下依赖可通过 `apt install ros-humble-<pkg>` 安装（或用 `rosdep` 一次装齐）：
+
+- `rclcpp`
+- `sensor_msgs`
+- `std_msgs`
+- `cv_bridge`
+- `image_transport`
+- `ament_index_cpp`
+- `rosidl_default_generators` / `rosidl_default_runtime`（构建 `aim_interfaces` 消息）
+- `rqt_image_view`（查看调试图像，可选）
+
+推荐用 `rosdep` 自动安装：
+
 ```bash
-cd ~/ros2_ws/src
-git clone <repository_url>
+cd /mnt/c/Users/ty/Desktop/rm_wk/qianli_basic_train
+rosdep install --from-paths src --ignore-src -r -y
 ```
 
-### 2. 编译包
+### 第三方库
+
+- **OpenCV**（组件：`core imgproc dnn calib3d`）—— 通常随 ROS 2 一并安装
+- **ONNX Runtime 1.18.1** —— 已随仓库附带在
+  `src/armor_detector/third_party/onnxruntime/`（含 `include/` 与 `lib/libonnxruntime.so`），
+  由 CMake 以 IMPORTED 目标链接，无需额外安装。
+
+### 模型文件
+
+- YOLO 模型：`src/armor_detector/models/armor_yolo11s.onnx`（随仓库附带）。
+- 相关参数见 `src/armor_detector/config/armor_detector.yaml`
+  （`input_size`、`confidence_threshold`、相机内参 `camera_matrix`、畸变 `distortion` 等）。
+
+## 编译
+
 ```bash
-cd ~/ros2_ws
-colcon build --packages-select image_publisher
+cd /mnt/c/Users/ty/Desktop/rm_wk/qianli_basic_train
+source /opt/ros/humble/setup.bash
+colcon build --symlink-install --allow-overriding image_publisher
 source install/setup.bash
 ```
 
-## 🚀 快速开始
+## 运行
 
-### 基础使用
+> 每个终端都需要先 `source /opt/ros/humble/setup.bash` 和本工作区的 `install/setup.bash`。
+
+### 终端 1 —— 启动识别节点
+
 ```bash
-# 使用默认参数启动（需要修改图片文件夹路径）
+cd /mnt/c/Users/ty/Desktop/rm_wk/qianli_basic_train
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch armor_detector armor_detector.launch.py
+```
+
+### 终端 2 —— 循环发布测试图片
+
+```bash
+cd /mnt/c/Users/ty/Desktop/rm_wk/qianli_basic_train
+source /opt/ros/humble/setup.bash
+source install/setup.bash
 ros2 launch image_publisher image_publisher.launch.py
-
-# 指定图片文件夹
-ros2 launch image_publisher image_publisher.launch.py image_folder:=/path/to/your/images
 ```
 
+### 终端 3 —— 显示识别结果图（带识别框、类别和坐标）
 
-## 🎛️ 参数配置
-
-### Launch文件参数
-
-| 参数名 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `image_folder` | string | "" | 图片文件夹路径（空则使用包内示例） |
-| `publish_rate` | double | 1.0 | 发布频率（Hz），建议范围：0.1-10.0 |
-| `loop` | bool | false | 是否循环播放图片 |
-| `preload_images` | bool | true | 是否预加载图像到内存 |
-| `use_compression` | bool | false | 是否发布压缩图像 |
-| `queue_size` | int | 50 | 发布队列大小 |
-| `resize_width` | int | 0 | 缩放宽度（0为不缩放） |
-| `resize_height` | int | 0 | 缩放高度（0为不缩放） |
-
-### 节点参数详解
-
-#### 📁 `image_folder` - 图片文件夹
-- **默认**: 使用包内 `images/` 文件夹的示例图片
-- **自定义**: 指定包含图片文件的文件夹路径
-- **支持格式**: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.tiff`, `.tif`
-
-#### ⏱️ `publish_rate` - 发布频率
-- **范围**: 0.1 - 10.0 Hz
-- **推荐**: 1.0 Hz（适合大多数应用）
-- **高频**: 5.0+ Hz（实时应用）
-- **低频**: 0.1-0.5 Hz（节省资源）
-
-#### 🔄 `loop` - 循环播放
-- `true`: 播放完所有图片后重新开始
-- `false`: 播放完毕后停止发布
-
-## 📊 话题信息
-
-### 发布的话题
-
-| 话题名 | 消息类型 | 说明 |
-|--------|----------|------|
-| `/image_raw` | `sensor_msgs/msg/Image` | 原始图像数据 |
-| `/image_raw/compressed` | `sensor_msgs/msg/CompressedImage` | 压缩图像数据（可选） |
-
-### 消息格式
 ```bash
-# 查看话题信息
-ros2 topic info /image_raw
-ros2 topic echo /image_raw --no-arr
-
-# 查看发布频率
-ros2 topic hz /image_raw
+source /opt/ros/humble/setup.bash
+source /mnt/c/Users/ty/Desktop/rm_wk/qianli_basic_train/install/setup.bash
+ros2 run rqt_image_view rqt_image_view /aim_debug
 ```
 
-## 🐛 故障排除
+如果没有自动选中，在窗口顶部选择 `/aim_debug`。
 
-### 常见问题
+### 终端 4 —— 查看坐标消息
 
-#### 1. 找不到图片文件夹
+```bash
+source /opt/ros/humble/setup.bash
+source /mnt/c/Users/ty/Desktop/rm_wk/qianli_basic_train/install/setup.bash
+ros2 topic echo /aim_target
 ```
-错误: 无法加载图片文件，节点将退出
-```
-**解决方案:**
-- 检查文件夹路径是否正确
-- 确保文件夹包含支持的图像格式
-- 检查文件读取权限
 
-#### 2. 内存不足
-```
-错误: 预加载图像失败
-```
-**解决方案:**
-- 设置 `preload_images:=false`
-- 减少图片数量或尺寸
-- 使用图像压缩
+## 话题与消息格式
 
-#### 3. 发布频率过高
-```
-警告: 发布队列已满
-```
-**解决方案:**
-- 降低 `publish_rate` 参数
-- 增加 `queue_size` 参数
-- 启用图像压缩
+| 话题 | 类型 | 说明 |
+| --- | --- | --- |
+| `/aim_debug` | `sensor_msgs/Image` | 带识别框、类别与坐标的调试图像 |
+| `/aim_target` | `aim_interfaces/AimInfo` | 目标坐标与类别 |
 
-#### 4. OpenCV错误
+实测 `/aim_target` 消息格式：
+
+```yaml
+coordinate:
+- 1203
+- -91
+- -2264
+type: 2
 ```
-错误: cv_bridge异常
-```
-**解决方案:**
-- 检查图像文件是否损坏
-- 验证OpenCV安装
-- 尝试不同的图像格式
+
+- `coordinate` 当前单位为**毫米**，顺序为机器人坐标系 `[x, y, z]`。
+- `type` 为识别到的目标类别编号。

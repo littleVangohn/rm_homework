@@ -1,0 +1,17 @@
+armor_detector:
+  ros__parameters:
+    model_path: ""
+    input_size: 960
+    confidence_threshold: 0.25
+    nms_threshold: 0.45
+    armor_width: 0.16
+    armor_height: 0.08
+    camera_matrix: [1462.3697, 0.0, 398.59394,
+                    0.0, 1469.68385, 110.68997,
+                    0.0, 0.0, 1.0]
+    distortion: [0.003518, -0.311778, -0.016581, 0.023682, 0.0]
+    camera_translation: [0.08, 0.0, 0.05]
+    camera_rpy_deg: [0.0, 60.0, 20.0]
+    use_ros_optical_convention: true
+    coordinate_scale: 1000.0
+    debug_topic: "/aim_debug"

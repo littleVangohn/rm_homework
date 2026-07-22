@@ -1,0 +1,14 @@
+
+build/
+install/
+log/
+
+.vscode/
+__pycache__/
+*.pyc
+
+src/armor_detector/models/*.onnx
+src/armor_detector/third_party/onnxruntime/lib/*.so
+src/armor_detector/third_party/onnxruntime/lib/*.so.*
+/image*.png
+/log.png
