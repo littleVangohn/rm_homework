@@ -120,3 +120,5 @@ type: 2
 
 - `coordinate` 当前单位为**毫米**，顺序为机器人坐标系 `[x, y, z]`。
 - `type` 为识别到的目标类别编号。
+- <img width="2877" height="1700" alt="image" src="https://github.com/user-attachments/assets/1203f256-55d4-46cb-8ce2-d56a86a44e08" />
+
